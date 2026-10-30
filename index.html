@@ -3,157 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>地獄級鑽木取火 - 全球排行榜版</title>
+    <title>鑽木取火 - 地獄極難版</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         body {
             margin: 0;
-            padding: 0;
-            background: #0f0a0a;
+            padding: 16px;
+            background: #0d0705;
             color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
+            overflow-x: hidden;
         }
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            max-width: 500px;
-            background: #1a0f0d;
-            display: flex;
-            flex-direction: column;
-        }
-        canvas {
+        .container {
             width: 100%;
-            height: 50%;
-            background: #000;
-        }
-        .hud {
-            padding: 12px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background: #261411;
+            gap: 14px;
+            align-items: center;
         }
-        .stat-bar {
+        
+        /* 頂部數據儀表板 */
+        .header-card {
+            width: 100%;
+            background: #230d05;
+            border: 1.5px solid #4a1c0d;
+            border-radius: 16px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-icon {
+            font-size: 20px;
+        }
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #a88;
             font-weight: bold;
         }
-        .bar-outer {
-            width: 60%;
-            height: 14px;
-            background: #44221c;
-            border-radius: 7px;
-            overflow: hidden;
-            border: 1px solid #66332b;
+        .stat-value {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffcc00;
+            font-family: monospace;
         }
-        .bar-inner {
+        .sound-btn {
+            background: #3a170a;
+            border: 1px solid #632610;
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* 階段膠囊標籤 */
+        .stage-badge {
+            background: #331207;
+            border: 1px solid #571e0a;
+            color: #ffaa88;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff5500;
+            border-radius: 50%;
+        }
+
+        /* 主畫布卡片 */
+        .canvas-card {
+            width: 100%;
+            height: 260px;
+            background: #180904;
+            border: 2px solid #3d170a;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 底部數據條 */
+        .bar-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .bar-title {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #1e0b04;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #3d170a;
+        }
+        .bar-fill {
             height: 100%;
             width: 0%;
             transition: width 0.1s linear;
         }
-        #temp-bar { background: linear-gradient(90deg, #ff9900, #ff0000); }
-        #stamina-bar { background: linear-gradient(90deg, #00ccff, #0055ff); }
-        #oxygen-bar { background: linear-gradient(90deg, #aaff00, #00ffaa); }
-        
-        .panel {
-            flex: 1;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #140a08;
-            position: relative;
-        }
-        button {
-            padding: 12px 24px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-            background: #e64a19;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px #992900;
-            cursor: pointer;
-        }
-        button:active {
-            box-shadow: 0 1px #992900;
-            transform: translateY(3px);
-        }
-        .exhausted-notice {
+        #temp-fill { background: linear-gradient(90deg, #ff6600, #ff0000); }
+        #stamina-fill { background: #10b981; }
+        #oxygen-fill { background: #3b82f6; }
+
+        /* 暈眩提示 */
+        .stun-overlay {
             position: absolute;
-            top: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             color: #ff3333;
-            font-size: 20px;
             font-weight: 900;
-            animation: blink 0.3s infinite alternate;
+            font-size: 20px;
+            text-shadow: 0 0 10px rgba(255,0,0,0.8);
             display: none;
         }
-        @keyframes blink {
-            from { opacity: 1; }
-            to { opacity: 0.2; }
+
+        /* 吹氣按鈕 */
+        #blow-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(180deg, #ff5500, #cc2200);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px #881100;
+            cursor: pointer;
+            display: none;
         }
-        /* 排行榜彈窗 */
+
+        /* 全球排行榜彈窗 */
         #leaderboard-modal {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: flex;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92);
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            z-index: 10;
+            z-index: 99;
+        }
+        .modal-box {
+            width: 100%;
+            max-width: 360px;
+            background: #230d05;
+            border: 1.5px solid #571e0a;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #leaderboard-list {
             width: 100%;
-            max-height: 250px;
+            max-height: 200px;
             overflow-y: auto;
-            margin: 15px 0;
+            margin: 12px 0;
             padding: 0;
             list-style: none;
         }
         #leaderboard-list li {
             display: flex;
             justify-content: space-between;
-            padding: 8px 12px;
-            border-bottom: 1px solid #333;
-            font-size: 14px;
+            padding: 6px 10px;
+            border-bottom: 1px solid #3d170a;
+            font-size: 13px;
         }
         input[type="text"] {
-            padding: 8px;
-            font-size: 16px;
-            border-radius: 4px;
-            border: none;
+            width: 100%;
+            padding: 10px;
+            background: #100603;
+            border: 1px solid #571e0a;
+            border-radius: 8px;
+            color: #fff;
             text-align: center;
             margin-bottom: 10px;
         }
     </style>
-    <!-- Firebase SDK (Version 9) -->
+    <!-- Firebase SDK (用於跨裝置排行榜) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Firebase 預設配置 (可自訂替換)
-        const firebaseConfig = {
-            databaseURL: "https://friction-fire-default-rtdb.firebaseio.com" 
-        };
-
+        const firebaseConfig = { databaseURL: "https://friction-fire-default-rtdb.firebaseio.com" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         window.db = db;
@@ -162,251 +243,309 @@
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="canvas"></canvas>
-    
-    <div class="hud">
-        <div class="stat-bar">
-            <span>溫度: <span id="temp-text">25</span>°C</span>
-            <div class="bar-outer"><div id="temp-bar" class="bar-inner"></div></div>
+<div class="container">
+    <!-- 頂部儀表板 -->
+    <div class="header-card">
+        <div class="stat-box">
+            <span class="stat-icon">⏱️</span>
+            <div class="stat-content">
+                <span class="stat-label">生存耗時</span>
+                <span class="stat-value" id="timer">00:00.0</span>
+            </div>
         </div>
-        <div class="stat-bar">
-            <span>轉速: <span id="rpm-text">0</span> RPM</span>
-            <span id="mode-text" style="color: #ff9900;">[極難模式]</span>
+        <div class="stat-box">
+            <span class="stat-icon">🏎️</span>
+            <div class="stat-content">
+                <span class="stat-label">轉速 RPM</span>
+                <span class="stat-value" id="rpm-val">0 <small style="font-size: 10px; color: #888;">靜止</small></span>
+            </div>
         </div>
-        <div class="stat-bar">
-            <span>體力:</span>
-            <div class="bar-outer"><div id="stamina-bar" class="bar-inner" style="width: 100%;"></div></div>
-        </div>
-        <div id="oxygen-container" class="stat-bar" style="display: none;">
-            <span>氧氣量:</span>
-            <div class="bar-outer"><div id="oxygen-bar" class="bar-inner" style="width: 0%;"></div></div>
-        </div>
+        <button class="sound-btn" id="sound-toggle">🔊</button>
     </div>
 
-    <div class="panel" id="touch-zone">
-        <div class="exhausted-notice" id="exhausted-text">⚡ 體力耗盡！暈眩中...</div>
-        <p id="instruction" style="text-align:center; color:#aaa; font-size: 14px;">
-            在地板區域【極速左右滑動】<br>轉速需 > 120 RPM 才能升溫！
-        </p>
-        <button id="blow-btn" style="display: none;">🔥 吹氣 💨</button>
+    <!-- 階段狀態標籤 -->
+    <div class="stage-badge" id="stage-badge">
+        <span class="badge-dot"></span>
+        <span id="stage-text">階段 1: 極速摩擦 (需 >120 RPM)</span>
     </div>
+
+    <!-- 主畫布區域 -->
+    <div class="canvas-card" id="touch-area">
+        <canvas id="canvas"></canvas>
+        <div class="stun-overlay" id="stun-msg">⚡ 體力耗盡！暈眩中...</div>
+    </div>
+
+    <!-- 底部進度條區 -->
+    <div class="bar-group">
+        <div class="bar-header">
+            <span class="bar-title">🌡️ 鑽頭溫度 (目標: 230°C)</span>
+            <span id="temp-val">25°C</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="temp-fill"></div></div>
+    </div>
+
+    <div class="bar-group">
+        <div class="bar-header">
+            <span class="bar-title">❤️ 生存體力</span>
+            <span id="stamina-val">100%</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="stamina-fill" style="width: 100%;"></div></div>
+    </div>
+
+    <div class="bar-group" id="oxygen-group" style="display: none;">
+        <div class="bar-header">
+            <span class="bar-title">💨 氧氣量 (保持 40-80%)</span>
+            <span id="oxygen-val">0%</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="oxygen-fill"></div></div>
+    </div>
+
+    <button id="blow-btn">🔥 吹氣 💨</button>
 </div>
 
-<!-- 排行榜與結算視窗 -->
-<div id="leaderboard-modal" style="display: none;">
-    <h2 id="result-title" style="color: #ff5500; margin: 0;">生火成功！</h2>
-    <p id="result-time">耗時: 0 秒</p>
-    
-    <input type="text" id="player-name" placeholder="輸入你的大名" maxlength="10">
-    <button id="submit-score-btn">上傳成績並查看榜單</button>
+<!-- 排行榜視窗 -->
+<div id="leaderboard-modal">
+    <div class="modal-box">
+        <h2 id="modal-title" style="color: #ff5500; margin-top:0;">🔥 生火成功！</h2>
+        <p id="modal-time" style="color:#aaa; font-size: 14px;">耗時: 0 秒</p>
+        
+        <input type="text" id="player-name" placeholder="輸入名字登上英雄榜" maxlength="10">
+        <button id="submit-score" style="width:100%; padding:10px; background:#e64a19; border:none; border-radius:8px; color:#fff; font-weight:bold;">上傳成績</button>
 
-    <h3>🔥 全球地獄取火榜 (Top 10)</h3>
-    <ul id="leaderboard-list"></ul>
-    
-    <button id="restart-btn" style="background: #444; margin-top: 10px;">再試一次</button>
+        <h4 style="margin: 12px 0 6px 0; color:#ffcc00;">🏆 全球排行榜 Top 10</h4>
+        <ul id="leaderboard-list"></ul>
+        
+        <button id="restart-btn" style="width:100%; padding:8px; background:#444; border:none; border-radius:8px; color:#fff; margin-top:10px;">再試一次</button>
+    </div>
 </div>
 
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     
-    // 尺寸設置
     function resizeCanvas() {
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
     }
     resizeCanvas();
 
-    // 遊戲參數 (地獄極難)
+    // 遊戲機制變數 (極難參數)
     let temp = 25;
     let rpm = 0;
     let targetRpm = 0;
     let stamina = 100;
     let oxygen = 0;
-    let isExhausted = false;
-    let phase = 1; // 1: 摩擦階段, 2: 吹氣階段, 3: 結算
-    let startTime = 0;
-    let endTime = 0;
+    let isStunned = false;
+    let phase = 1;
+    let startTime = null;
+    let elapsedTime = 0;
+    let soundEnabled = true;
 
     let touchX = 0;
     let touchY = 0;
 
-    // DOM
-    const tempText = document.getElementById('temp-text');
-    const rpmText = document.getElementById('rpm-text');
-    const tempBar = document.getElementById('temp-bar');
-    const staminaBar = document.getElementById('stamina-bar');
-    const oxygenBar = document.getElementById('oxygen-bar');
-    const oxygenContainer = document.getElementById('oxygen-container');
-    const touchZone = document.getElementById('touch-zone');
-    const blowBtn = document.getElementById('blow-btn');
-    const exhaustedText = document.getElementById('exhausted-text');
-    const instruction = document.getElementById('instruction');
+    // Web Audio API 音效生成器
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    function playFrictionSound(speed) {
+        if (!soundEnabled || !audioCtx) return;
+        try {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(50 + speed * 0.5, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        } catch(e){}
+    }
 
-    // 滑動事件處理
-    touchZone.addEventListener('touchstart', (e) => {
-        if (phase !== 1 || isExhausted) return;
+    // DOM 元素
+    const timerEl = document.getElementById('timer');
+    const rpmEl = document.getElementById('rpm-val');
+    const tempValEl = document.getElementById('temp-val');
+    const tempFill = document.getElementById('temp-fill');
+    const staminaValEl = document.getElementById('stamina-val');
+    const staminaFill = document.getElementById('stamina-fill');
+    const oxygenGroup = document.getElementById('oxygen-group');
+    const oxygenValEl = document.getElementById('oxygen-val');
+    const oxygenFill = document.getElementById('oxygen-fill');
+    const touchArea = document.getElementById('touch-area');
+    const blowBtn = document.getElementById('blow-btn');
+    const stunMsg = document.getElementById('stun-msg');
+    const stageText = document.getElementById('stage-text');
+    const soundBtn = document.getElementById('sound-toggle');
+
+    soundBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
+    });
+
+    // 手指滑動操作 (極難轉換率: 0.25)
+    touchArea.addEventListener('touchstart', (e) => {
+        initAudio();
+        if (phase !== 1 || isStunned) return;
         touchX = e.touches[0].clientX;
         touchY = e.touches[0].clientY;
         if (!startTime) startTime = Date.now();
     });
 
-    touchZone.addEventListener('touchmove', (e) => {
-        if (phase !== 1 || isExhausted) return;
+    touchArea.addEventListener('touchmove', (e) => {
+        if (phase !== 1 || isStunned) return;
         const curX = e.touches[0].clientX;
         const curY = e.touches[0].clientY;
         const dist = Math.hypot(curX - touchX, curY - touchY);
 
         if (dist > 5) {
-            targetRpm += dist * 0.25; // 極低靈敏度
-            stamina = Math.max(0, stamina - 0.25);
+            targetRpm += dist * 0.25; 
+            stamina = Math.max(0, stamina - 0.22);
+            playFrictionSound(rpm);
             touchX = curX;
             touchY = curY;
         }
     });
 
-    // 吹氣按鈕
     blowBtn.addEventListener('click', () => {
         if (phase === 2) {
-            oxygen = Math.min(100, oxygen + 12);
+            oxygen = Math.min(100, oxygen + 15);
+            playFrictionSound(200);
         }
     });
 
-    // 遊戲主循環
+    // 遊戲主邏輯
     function update() {
-        if (phase === 1) {
-            // RPM 物理衰減
-            rpm += (targetRpm - rpm) * 0.1;
-            targetRpm *= 0.72; // 高衰減率
+        if (startTime && phase !== 3) {
+            elapsedTime = (Date.now() - startTime) / 1000;
+            let m = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            let s = (elapsedTime % 60).toFixed(1).padStart(4, '0');
+            timerEl.innerText = `${m}:${s}`;
+        }
 
-            // 體力機制
-            if (stamina <= 0 && !isExhausted) {
-                isExhausted = true;
-                exhaustedText.style.display = 'block';
+        if (phase === 1) {
+            rpm += (targetRpm - rpm) * 0.1;
+            targetRpm *= 0.72; // 高摩擦阻力
+
+            if (stamina <= 0 && !isStunned) {
+                isStunned = true;
+                stunMsg.style.display = 'block';
                 setTimeout(() => {
-                    isExhausted = false;
-                    stamina = 50;
-                    exhaustedText.style.display = 'none';
+                    isStunned = false;
+                    stamina = 40;
+                    stunMsg.style.display = 'none';
                 }, 2500);
             }
 
-            if (!isExhausted) {
-                stamina = Math.min(100, stamina + 0.1);
-            }
+            if (!isStunned) stamina = Math.min(100, stamina + 0.1);
 
-            // 升溫與冷卻
-            if (rpm > 120 && !isExhausted) { // 高門檻
+            if (rpm > 120 && !isStunned) {
                 temp += (rpm - 120) * 0.0035; // 極慢升溫
             } else {
-                temp -= 0.65; // 強制快速冷卻
+                temp -= 0.65; // 極速降溫
             }
+            temp = Math.max(25, Math.min(230, temp));
 
-            temp = Math.max(25, Math.min(250, temp));
-
-            // 進入吹氣階段判定
             if (temp >= 230) {
                 phase = 2;
-                instruction.style.display = 'none';
+                stageText.innerText = "階段 2: 控制吹氣 (保持 40-80%)";
+                oxygenGroup.style.display = 'flex';
                 blowBtn.style.display = 'block';
-                oxygenContainer.style.display = 'flex';
             }
         } else if (phase === 2) {
-            // 吹氣階段
-            oxygen -= 0.4; // 氧氣消耗
+            oxygen -= 0.45;
             if (oxygen > 40 && oxygen < 80) {
-                temp += 0.3;
+                temp += 0.4;
             } else {
-                temp -= 0.4;
+                temp -= 0.5;
             }
 
             if (temp >= 300) {
-                // 成功點燃
                 phase = 3;
-                endTime = Date.now();
-                showLeaderboard(true);
-            } else if (temp < 150 || oxygen < 0) {
-                // 失敗
+                showModal(true);
+            } else if (temp < 140 || oxygen < 0) {
                 phase = 3;
-                showLeaderboard(false);
+                showModal(false);
             }
         }
 
-        // UI 渲染
-        tempText.innerText = Math.floor(temp);
-        rpmText.innerText = Math.floor(rpm);
-        tempBar.style.width = `${Math.min(100, (temp / 300) * 100)}%`;
-        staminaBar.style.width = `${stamina}%`;
-        oxygenBar.style.width = `${Math.max(0, oxygen)}%`;
+        // 更新 UI
+        rpmEl.innerHTML = `${Math.floor(rpm)} <small style="font-size: 10px; color: #888;">${rpm > 10 ? '高速' : '靜止'}</small>`;
+        tempValEl.innerText = `${Math.floor(temp)}°C`;
+        tempFill.style.width = `${Math.min(100, (temp / 230) * 100)}%`;
+        staminaValEl.innerText = `${Math.floor(stamina)}%`;
+        staminaFill.style.width = `${stamina}%`;
+        oxygenValEl.innerText = `${Math.max(0, Math.floor(oxygen))}%`;
+        oxygenFill.style.width = `${Math.max(0, oxygen)}%`;
 
         drawCanvas();
         requestAnimationFrame(update);
     }
 
-    // 畫布繪製 (鑽木與火花)
+    // 畫布繪製
     function drawCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2 + 30;
 
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+        // 底木塊 (圓角)
+        ctx.fillStyle = "#4a2511";
+        ctx.beginPath();
+        ctx.roundRect(cx - 90, cy, 180, 24, 8);
+        ctx.fill();
 
-        // 底木
-        ctx.fillStyle = "#5c3a21";
-        ctx.fillRect(centerX - 100, centerY + 40, 200, 30);
-
-        // 鑽木棒
+        // 旋轉鑽木棍
         ctx.save();
-        ctx.translate(centerX, centerY - 20);
-        const rotation = (Date.now() * (rpm / 500)) % 0.4 - 0.2;
-        ctx.rotate(rotation);
-        ctx.fillStyle = "#8b5a2b";
-        ctx.fillRect(-10, -80, 20, 120);
+        ctx.translate(cx, cy);
+        const rot = (Date.now() * (rpm / 300)) % 0.3 - 0.15;
+        ctx.rotate(rot);
+        ctx.fillStyle = "#8c4a22";
+        ctx.beginPath();
+        ctx.roundRect(-8, -130, 16, 130, 4);
+        ctx.fill();
         ctx.restore();
 
-        // 煙霧與火花特效
-        if (temp > 100) {
-            ctx.fillStyle = `rgba(200, 200, 200, ${(temp - 100) / 200})`;
+        // 煙霧效果
+        if (temp > 90) {
+            ctx.fillStyle = `rgba(220, 220, 220, ${Math.min(0.8, (temp - 90) / 150)})`;
             ctx.beginPath();
-            ctx.arc(centerX + (Math.random() * 20 - 10), centerY + 30, (temp / 10), 0, Math.PI * 2);
+            ctx.arc(cx + (Math.random() * 12 - 6), cy - 10 - (temp - 90) * 0.3, 6 + (temp / 20), 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
-    // 顯示結算與排行榜
-    function showLeaderboard(isSuccess) {
+    // 排行榜彈窗邏輯
+    function showModal(isSuccess) {
         const modal = document.getElementById('leaderboard-modal');
-        const title = document.getElementById('result-title');
-        const timeText = document.getElementById('result-time');
+        const title = document.getElementById('modal-title');
+        const timeEl = document.getElementById('modal-time');
         modal.style.display = 'flex';
-
-        const seconds = ((endTime - startTime) / 1000).toFixed(2);
 
         if (isSuccess) {
             title.innerText = "🔥 鑽木取火成功！";
-            timeText.innerText = `生存挑戰耗時: ${seconds} 秒`;
+            timeEl.innerText = `最終生存耗時: ${elapsedTime.toFixed(1)} 秒`;
         } else {
             title.innerText = "❌ 火種熄滅，失敗！";
-            timeText.innerText = "請再接再勵！";
+            timeEl.innerText = "請再次嘗試突破極限！";
         }
-
         fetchLeaderboard();
     }
 
-    // 排行榜 Firebase 邏輯
-    const submitBtn = document.getElementById('submit-score-btn');
+    const submitBtn = document.getElementById('submit-score');
     submitBtn.addEventListener('click', () => {
-        const name = document.getElementById('player-name').value.trim() || "無名勇士";
-        const seconds = parseFloat(((endTime - startTime) / 1000).toFixed(2));
-
+        const name = document.getElementById('player-name').value.trim() || "匿名勇士";
         if (window.dbUtils && window.db) {
             const scoresRef = window.dbUtils.ref(window.db, 'scores');
             window.dbUtils.push(scoresRef, {
                 name: name,
-                time: seconds,
+                time: parseFloat(elapsedTime.toFixed(1)),
                 timestamp: Date.now()
             });
             submitBtn.disabled = true;
-            submitBtn.innerText = "已上傳成績";
+            submitBtn.innerText = "已提交榜單";
             fetchLeaderboard();
         }
     });
@@ -420,16 +559,12 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             const data = [];
-            snapshot.forEach((child) => {
-                data.push(child.val());
-            });
-
-            // 按時間排序 (越短越好)
+            snapshot.forEach((child) => { data.push(child.val()); });
             data.sort((a, b) => a.time - b.time);
 
-            data.forEach((item, index) => {
+            data.forEach((item, idx) => {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>#${index + 1} ${item.name}</span><span>${item.time} 秒</span>`;
+                li.innerHTML = `<span>#${idx + 1} ${item.name}</span><span style="color:#ffcc00; font-family:monospace;">${item.time}s</span>`;
                 list.appendChild(li);
             });
         });
