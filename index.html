@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>地獄級鑽木取火 - 全球排行榜版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f0a0a;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 500px;
+            background: #1a0f0d;
+            display: flex;
+            flex-direction: column;
+        }
+        canvas {
+            width: 100%;
+            height: 50%;
+            background: #000;
+        }
+        .hud {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #261411;
+        }
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .bar-outer {
+            width: 60%;
+            height: 14px;
+            background: #44221c;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #66332b;
+        }
+        .bar-inner {
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        #temp-bar { background: linear-gradient(90deg, #ff9900, #ff0000); }
+        #stamina-bar { background: linear-gradient(90deg, #00ccff, #0055ff); }
+        #oxygen-bar { background: linear-gradient(90deg, #aaff00, #00ffaa); }
+        
+        .panel {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #140a08;
+            position: relative;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: #e64a19;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px #992900;
+            cursor: pointer;
+        }
+        button:active {
+            box-shadow: 0 1px #992900;
+            transform: translateY(3px);
+        }
+        .exhausted-notice {
+            position: absolute;
+            top: 20px;
+            color: #ff3333;
+            font-size: 20px;
+            font-weight: 900;
+            animation: blink 0.3s infinite alternate;
+            display: none;
+        }
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.2; }
+        }
+        /* 排行榜彈窗 */
+        #leaderboard-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10;
+        }
+        #leaderboard-list {
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding: 0;
+            list-style: none;
+        }
+        #leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: none;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+    <!-- Firebase SDK (Version 9) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Firebase 預設配置 (可自訂替換)
+        const firebaseConfig = {
+            databaseURL: "https://friction-fire-default-rtdb.firebaseio.com" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        window.db = db;
+        window.dbUtils = { ref, push, onValue, query, orderByChild, limitToLast };
+    </script>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="canvas"></canvas>
+    
+    <div class="hud">
+        <div class="stat-bar">
+            <span>溫度: <span id="temp-text">25</span>°C</span>
+            <div class="bar-outer"><div id="temp-bar" class="bar-inner"></div></div>
+        </div>
+        <div class="stat-bar">
+            <span>轉速: <span id="rpm-text">0</span> RPM</span>
+            <span id="mode-text" style="color: #ff9900;">[極難模式]</span>
+        </div>
+        <div class="stat-bar">
+            <span>體力:</span>
+            <div class="bar-outer"><div id="stamina-bar" class="bar-inner" style="width: 100%;"></div></div>
+        </div>
+        <div id="oxygen-container" class="stat-bar" style="display: none;">
+            <span>氧氣量:</span>
+            <div class="bar-outer"><div id="oxygen-bar" class="bar-inner" style="width: 0%;"></div></div>
+        </div>
+    </div>
+
+    <div class="panel" id="touch-zone">
+        <div class="exhausted-notice" id="exhausted-text">⚡ 體力耗盡！暈眩中...</div>
+        <p id="instruction" style="text-align:center; color:#aaa; font-size: 14px;">
+            在地板區域【極速左右滑動】<br>轉速需 > 120 RPM 才能升溫！
+        </p>
+        <button id="blow-btn" style="display: none;">🔥 吹氣 💨</button>
+    </div>
+</div>
+
+<!-- 排行榜與結算視窗 -->
+<div id="leaderboard-modal" style="display: none;">
+    <h2 id="result-title" style="color: #ff5500; margin: 0;">生火成功！</h2>
+    <p id="result-time">耗時: 0 秒</p>
+    
+    <input type="text" id="player-name" placeholder="輸入你的大名" maxlength="10">
+    <button id="submit-score-btn">上傳成績並查看榜單</button>
+
+    <h3>🔥 全球地獄取火榜 (Top 10)</h3>
+    <ul id="leaderboard-list"></ul>
+    
+    <button id="restart-btn" style="background: #444; margin-top: 10px;">再試一次</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 尺寸設置
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+    }
+    resizeCanvas();
+
+    // 遊戲參數 (地獄極難)
+    let temp = 25;
+    let rpm = 0;
+    let targetRpm = 0;
+    let stamina = 100;
+    let oxygen = 0;
+    let isExhausted = false;
+    let phase = 1; // 1: 摩擦階段, 2: 吹氣階段, 3: 結算
+    let startTime = 0;
+    let endTime = 0;
+
+    let touchX = 0;
+    let touchY = 0;
+
+    // DOM
+    const tempText = document.getElementById('temp-text');
+    const rpmText = document.getElementById('rpm-text');
+    const tempBar = document.getElementById('temp-bar');
+    const staminaBar = document.getElementById('stamina-bar');
+    const oxygenBar = document.getElementById('oxygen-bar');
+    const oxygenContainer = document.getElementById('oxygen-container');
+    const touchZone = document.getElementById('touch-zone');
+    const blowBtn = document.getElementById('blow-btn');
+    const exhaustedText = document.getElementById('exhausted-text');
+    const instruction = document.getElementById('instruction');
+
+    // 滑動事件處理
+    touchZone.addEventListener('touchstart', (e) => {
+        if (phase !== 1 || isExhausted) return;
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+        if (!startTime) startTime = Date.now();
+    });
+
+    touchZone.addEventListener('touchmove', (e) => {
+        if (phase !== 1 || isExhausted) return;
+        const curX = e.touches[0].clientX;
+        const curY = e.touches[0].clientY;
+        const dist = Math.hypot(curX - touchX, curY - touchY);
+
+        if (dist > 5) {
+            targetRpm += dist * 0.25; // 極低靈敏度
+            stamina = Math.max(0, stamina - 0.25);
+            touchX = curX;
+            touchY = curY;
+        }
+    });
+
+    // 吹氣按鈕
+    blowBtn.addEventListener('click', () => {
+        if (phase === 2) {
+            oxygen = Math.min(100, oxygen + 12);
+        }
+    });
+
+    // 遊戲主循環
+    function update() {
+        if (phase === 1) {
+            // RPM 物理衰減
+            rpm += (targetRpm - rpm) * 0.1;
+            targetRpm *= 0.72; // 高衰減率
+
+            // 體力機制
+            if (stamina <= 0 && !isExhausted) {
+                isExhausted = true;
+                exhaustedText.style.display = 'block';
+                setTimeout(() => {
+                    isExhausted = false;
+                    stamina = 50;
+                    exhaustedText.style.display = 'none';
+                }, 2500);
+            }
+
+            if (!isExhausted) {
+                stamina = Math.min(100, stamina + 0.1);
+            }
+
+            // 升溫與冷卻
+            if (rpm > 120 && !isExhausted) { // 高門檻
+                temp += (rpm - 120) * 0.0035; // 極慢升溫
+            } else {
+                temp -= 0.65; // 強制快速冷卻
+            }
+
+            temp = Math.max(25, Math.min(250, temp));
+
+            // 進入吹氣階段判定
+            if (temp >= 230) {
+                phase = 2;
+                instruction.style.display = 'none';
+                blowBtn.style.display = 'block';
+                oxygenContainer.style.display = 'flex';
+            }
+        } else if (phase === 2) {
+            // 吹氣階段
+            oxygen -= 0.4; // 氧氣消耗
+            if (oxygen > 40 && oxygen < 80) {
+                temp += 0.3;
+            } else {
+                temp -= 0.4;
+            }
+
+            if (temp >= 300) {
+                // 成功點燃
+                phase = 3;
+                endTime = Date.now();
+                showLeaderboard(true);
+            } else if (temp < 150 || oxygen < 0) {
+                // 失敗
+                phase = 3;
+                showLeaderboard(false);
+            }
+        }
+
+        // UI 渲染
+        tempText.innerText = Math.floor(temp);
+        rpmText.innerText = Math.floor(rpm);
+        tempBar.style.width = `${Math.min(100, (temp / 300) * 100)}%`;
+        staminaBar.style.width = `${stamina}%`;
+        oxygenBar.style.width = `${Math.max(0, oxygen)}%`;
+
+        drawCanvas();
+        requestAnimationFrame(update);
+    }
+
+    // 畫布繪製 (鑽木與火花)
+    function drawCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // 底木
+        ctx.fillStyle = "#5c3a21";
+        ctx.fillRect(centerX - 100, centerY + 40, 200, 30);
+
+        // 鑽木棒
+        ctx.save();
+        ctx.translate(centerX, centerY - 20);
+        const rotation = (Date.now() * (rpm / 500)) % 0.4 - 0.2;
+        ctx.rotate(rotation);
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(-10, -80, 20, 120);
+        ctx.restore();
+
+        // 煙霧與火花特效
+        if (temp > 100) {
+            ctx.fillStyle = `rgba(200, 200, 200, ${(temp - 100) / 200})`;
+            ctx.beginPath();
+            ctx.arc(centerX + (Math.random() * 20 - 10), centerY + 30, (temp / 10), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // 顯示結算與排行榜
+    function showLeaderboard(isSuccess) {
+        const modal = document.getElementById('leaderboard-modal');
+        const title = document.getElementById('result-title');
+        const timeText = document.getElementById('result-time');
+        modal.style.display = 'flex';
+
+        const seconds = ((endTime - startTime) / 1000).toFixed(2);
+
+        if (isSuccess) {
+            title.innerText = "🔥 鑽木取火成功！";
+            timeText.innerText = `生存挑戰耗時: ${seconds} 秒`;
+        } else {
+            title.innerText = "❌ 火種熄滅，失敗！";
+            timeText.innerText = "請再接再勵！";
+        }
+
+        fetchLeaderboard();
+    }
+
+    // 排行榜 Firebase 邏輯
+    const submitBtn = document.getElementById('submit-score-btn');
+    submitBtn.addEventListener('click', () => {
+        const name = document.getElementById('player-name').value.trim() || "無名勇士";
+        const seconds = parseFloat(((endTime - startTime) / 1000).toFixed(2));
+
+        if (window.dbUtils && window.db) {
+            const scoresRef = window.dbUtils.ref(window.db, 'scores');
+            window.dbUtils.push(scoresRef, {
+                name: name,
+                time: seconds,
+                timestamp: Date.now()
+            });
+            submitBtn.disabled = true;
+            submitBtn.innerText = "已上傳成績";
+            fetchLeaderboard();
+        }
+    });
+
+    function fetchLeaderboard() {
+        if (!window.dbUtils || !window.db) return;
+        const scoresRef = window.dbUtils.ref(window.db, 'scores');
+        const topScoresQuery = window.dbUtils.query(scoresRef, window.dbUtils.orderByChild('time'), window.dbUtils.limitToLast(10));
+
+        window.dbUtils.onValue(topScoresQuery, (snapshot) => {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            const data = [];
+            snapshot.forEach((child) => {
+                data.push(child.val());
+            });
+
+            // 按時間排序 (越短越好)
+            data.sort((a, b) => a.time - b.time);
+
+            data.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>#${index + 1} ${item.name}</span><span>${item.time} 秒</span>`;
+                list.appendChild(li);
+            });
+        });
+    }
+
+    document.getElementById('restart-btn').addEventListener('click', () => {
+        location.reload();
+    });
+
+    requestAnimationFrame(update);
+</script>
+</body>
+</html>
